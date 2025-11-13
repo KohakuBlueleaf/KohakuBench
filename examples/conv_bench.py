@@ -15,8 +15,21 @@ def main() -> None:
     bench = KoBench()
     cases = []
     conv_configs = [
-        {"batch_size": 4, "in_channels": 128, "out_channels": 256, "image_size": 64, "kernel_size": 3},
-        {"batch_size": 8, "in_channels": 64, "out_channels": 192, "image_size": 128, "kernel_size": 5, "stride": 2},
+        {
+            "batch_size": 4,
+            "in_channels": 128,
+            "out_channels": 256,
+            "image_size": 64,
+            "kernel_size": 3,
+        },
+        {
+            "batch_size": 8,
+            "in_channels": 64,
+            "out_channels": 192,
+            "image_size": 128,
+            "kernel_size": 5,
+            "stride": 2,
+        },
     ]
     for cfg in conv_configs:
         case = convolution.conv2d_case(
@@ -28,8 +41,20 @@ def main() -> None:
         cases.append(_tagged(case, tag))
 
     depthwise_configs = [
-        {"batch_size": 4, "channels": 256, "image_size": 64, "kernel_size": 3, "pointwise": True},
-        {"batch_size": 2, "channels": 512, "image_size": 32, "kernel_size": 5, "pointwise": False},
+        {
+            "batch_size": 4,
+            "channels": 256,
+            "image_size": 64,
+            "kernel_size": 3,
+            "pointwise": True,
+        },
+        {
+            "batch_size": 2,
+            "channels": 512,
+            "image_size": 32,
+            "kernel_size": 5,
+            "pointwise": False,
+        },
     ]
     for cfg in depthwise_configs:
         case = convolution.depthwise_conv2d_case(
