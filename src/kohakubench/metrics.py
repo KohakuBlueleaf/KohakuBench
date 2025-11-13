@@ -1,7 +1,5 @@
 """Utility helpers for counting MACs and FLOPs."""
 
-from __future__ import annotations
-
 from typing import Iterable
 
 __all__ = [

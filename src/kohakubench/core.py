@@ -1,14 +1,12 @@
-from __future__ import annotations
-
 import contextlib
 import statistics
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Iterable, Sequence
 
 import torch
 
-Number = Union[int, float]
+Number = int | float
 
 __all__ = [
     "BenchmarkCase",
@@ -21,7 +19,7 @@ __all__ = [
 _MB = 1024**2
 
 
-def resolve_device(device: Optional[Union[str, torch.device]] = None) -> torch.device:
+def resolve_device(device: str | torch.device | None = None) -> torch.device:
     """Normalize device input and default to CUDA when available."""
     if isinstance(device, torch.device):
         return device
@@ -31,8 +29,8 @@ def resolve_device(device: Optional[Union[str, torch.device]] = None) -> torch.d
 
 
 def resolve_dtype(
-    dtype: Optional[Union[str, torch.dtype]] = None,
-    device: Optional[Union[str, torch.device]] = None,
+    dtype: str | torch.dtype | None = None,
+    device: str | torch.device | None = None,
 ) -> torch.dtype:
     """Resolve dtype names/aliases to an actual torch dtype."""
     if isinstance(dtype, torch.dtype):
@@ -61,11 +59,11 @@ class BenchmarkCase:
 
     name: str
     fn: Callable[..., Any]
-    args: Tuple[Any, ...] = ()
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    flop_counter: Optional[Callable[[Dict[str, Any]], Number]] = None
-    mac_counter: Optional[Callable[[Dict[str, Any]], Number]] = None
+    args: tuple[Any, ...] = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    flop_counter: Callable[[dict[str, Any]], Number] | None = None
+    mac_counter: Callable[[dict[str, Any]], Number] | None = None
 
 
 @dataclass
@@ -79,16 +77,16 @@ class BenchmarkResult:
     latency_std_ms: float
     device: str
     dtype: str
-    idle_vram_mb: Optional[float]
-    peak_vram_mb: Optional[float]
-    workspace_vram_mb: Optional[float]
-    macs: Optional[float]
-    macs_rate: Optional[float]
-    flops: Optional[float]
-    flops_rate: Optional[float]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    idle_vram_mb: float | None
+    peak_vram_mb: float | None
+    workspace_vram_mb: float | None
+    macs: float | None
+    macs_rate: float | None
+    flops: float | None
+    flops_rate: float | None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "iters": self.iters,
@@ -114,8 +112,8 @@ class KoBench:
     def __init__(
         self,
         *,
-        device: Optional[Union[str, torch.device]] = None,
-        dtype: Optional[Union[str, torch.dtype]] = None,
+        device: str | torch.device | None = None,
+        dtype: str | torch.dtype | None = None,
         warmup: int = 8,
         iters: int = 32,
         sync: bool = True,
@@ -134,14 +132,14 @@ class KoBench:
 
     def benchmark(
         self,
-        target: Union[BenchmarkCase, Callable[..., Any]],
+        target: BenchmarkCase | Callable[..., Any],
         *,
-        name: Optional[str] = None,
-        warmup: Optional[int] = None,
-        iters: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        flop_counter: Optional[Callable[[Dict[str, Any]], Number]] = None,
-        mac_counter: Optional[Callable[[Dict[str, Any]], Number]] = None,
+        name: str | None = None,
+        warmup: int | None = None,
+        iters: int | None = None,
+        metadata: dict[str, Any] | None = None,
+        flop_counter: Callable[[dict[str, Any]], Number] | None = None,
+        mac_counter: Callable[[dict[str, Any]], Number] | None = None,
     ) -> BenchmarkResult:
         """Benchmark a single callable or BenchmarkCase."""
         case = self._normalize_case(
@@ -192,9 +190,9 @@ class KoBench:
 
     def benchmark_many(
         self,
-        cases: Iterable[Union[BenchmarkCase, Callable[..., Any]]],
+        cases: Iterable[BenchmarkCase | Callable[..., Any]],
         **kwargs: Any,
-    ) -> List[BenchmarkResult]:
+    ) -> list[BenchmarkResult]:
         """Benchmark a collection of cases sequentially."""
         return [self.benchmark(case, **kwargs) for case in cases]
 
@@ -202,12 +200,12 @@ class KoBench:
 
     def _normalize_case(
         self,
-        target: Union[BenchmarkCase, Callable[..., Any]],
+        target: BenchmarkCase | Callable[..., Any],
         *,
-        name: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        flop_counter: Optional[Callable[[Dict[str, Any]], Number]] = None,
-        mac_counter: Optional[Callable[[Dict[str, Any]], Number]] = None,
+        name: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        flop_counter: Callable[[dict[str, Any]], Number] | None = None,
+        mac_counter: Callable[[dict[str, Any]], Number] | None = None,
     ) -> BenchmarkCase:
         if isinstance(target, BenchmarkCase):
             return BenchmarkCase(
@@ -243,8 +241,8 @@ class KoBench:
             case.fn(*case.args, **case.kwargs)
             self._sync_cuda()
 
-    def _run_iterations(self, case: BenchmarkCase, repeats: int) -> List[float]:
-        durations: List[float] = []
+    def _run_iterations(self, case: BenchmarkCase, repeats: int) -> list[float]:
+        durations: list[float] = []
         for _ in range(repeats):
             self._sync_cuda()
             if self.is_cuda:
@@ -274,7 +272,7 @@ class KoBench:
         if self.sync and self.is_cuda:
             torch.cuda.synchronize(self.device)
 
-    def _start_memory_trace(self) -> Optional[Dict[str, int]]:
+    def _start_memory_trace(self) -> dict[str, int] | None:
         if not self.is_cuda:
             return None
         self._sync_cuda()
@@ -286,8 +284,8 @@ class KoBench:
         }
 
     def _finish_memory_trace(
-        self, idle_stats: Optional[Dict[str, int]]
-    ) -> Dict[str, Optional[int]]:
+        self, idle_stats: dict[str, int] | None
+    ) -> dict[str, int | None]:
         if not self.is_cuda or idle_stats is None:
             return {
                 "idle_allocated": None,
@@ -307,13 +305,13 @@ class KoBench:
         }
 
 
-def _bytes_to_mb(value: Optional[int]) -> Optional[float]:
+def _bytes_to_mb(value: int | None) -> float | None:
     if value is None:
         return None
     return round(value / _MB, 4)
 
 
-def _ops_per_second(ops: Optional[float], latency_ms: float) -> Optional[float]:
+def _ops_per_second(ops: float | None, latency_ms: float) -> float | None:
     if ops is None or latency_ms <= 0:
         return None
     seconds = latency_ms / 1000.0

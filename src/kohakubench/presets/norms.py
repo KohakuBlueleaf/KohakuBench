@@ -1,7 +1,5 @@
 """Normalization benchmark presets."""
 
-from __future__ import annotations
-
 import torch
 
 from ..core import BenchmarkCase, resolve_device, resolve_dtype

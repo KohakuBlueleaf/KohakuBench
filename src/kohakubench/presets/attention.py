@@ -1,7 +1,5 @@
 """Attention benchmark presets."""
 
-from __future__ import annotations
-
 import torch
 
 from ..core import BenchmarkCase, resolve_device, resolve_dtype
@@ -24,7 +22,9 @@ def multi_head_attention_case(
         raise ValueError("embed_dim must be divisible by num_heads")
     device = resolve_device(device)
     dtype = resolve_dtype(dtype, device)
-    attn = ScaledDotProductAttention(embed_dim, num_heads).to(device=device, dtype=dtype)
+    attn = ScaledDotProductAttention(embed_dim, num_heads).to(
+        device=device, dtype=dtype
+    )
     attn.eval()
     sample = torch.randn(batch_size, seq_len, embed_dim, device=device, dtype=dtype)
 

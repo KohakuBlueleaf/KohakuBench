@@ -1,7 +1,5 @@
 """Text formatting helpers for KoBench results."""
 
-from __future__ import annotations
-
 from typing import Iterable, Sequence
 
 from .core import BenchmarkResult
